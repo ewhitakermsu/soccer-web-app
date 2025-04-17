@@ -36,10 +36,6 @@ coverage/
 dist/
 build/
 
-# SQLite database files (if used)
-*.sqlite
-*.sqlite3
-*.db
 
 # Debug output
 debug.log
