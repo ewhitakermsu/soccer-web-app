@@ -4,12 +4,27 @@
       {
         "type": "node",
         "request": "launch",
-        "name": "Launch Backend",
+        "name": "Launch Server",
         "runtimeExecutable": "npm",
         "runtimeArgs": ["run", "dev"],
         "cwd": "${workspaceFolder}/backend",
         "console": "integratedTerminal"
+      },
+      {
+        "type": "node",
+        "request": "launch",
+        "name": "Launch Frontend",
+        "runtimeExecutable": "npm",
+        "runtimeArgs": ["run", "dev"],
+        "cwd": "${workspaceFolder}/frontend",
+        "console": "integratedTerminal"
       }
+    ],
+    "compounds": [
+        {
+            "name": "Launch Fullstack",
+            "configurations": ["Launch Server", "Launch Frontend"]
+        }
     ]
   }
   

@@ -1,5 +1,4 @@
 const { authenticateToken, generateToken } = require("./authentication/tokenFunc.js");
-
 const sqlite3 = require('sqlite3').verbose();
 const db = new sqlite3.Database('./database/mydatabase.db');
 //Create the USERS table if it doesn't exist
@@ -42,6 +41,7 @@ db.run(`
 //Setting up Express
 const express = require('express');
 const bcrypt = require('bcrypt');
+const cors = require('cors');
 const app = express();
 const PORT = 3000;
 
@@ -51,6 +51,7 @@ app.get('/', (req, res) => {
   res.send('Connected to the server!');
   });
 app.use(express.json());
+app.use(cors());
 app.use(express.urlencoded({extended: true}));
 app.use(express.static('public'));
 app.listen(PORT, () => { console.log(`Server running on http://localhost:${PORT}`); });
@@ -58,8 +59,8 @@ app.listen(PORT, () => { console.log(`Server running on http://localhost:${PORT}
 //Middleware
 //Ensures that only logged-in users can access protected resources
 app.use((req, res, next) => {
-  if (["/login", "/", "/register"].includes(req.path)) {
-      return next(); // Authorization is not needed to access the default, login, and registration routes
+  if (["/","/login","/register"].includes(req.path)) {
+      return next(); // Authorization is not needed to access the login and registration routes
   }
   authenticateToken(req, res, next);
 });
@@ -98,14 +99,14 @@ catch (err) {
   });
 
 //Create (POST) a row to GAMES table
-app.post('/api/mydatabase/games', validateGame, (req, res) => {
+app.post('/api/creategame', validateGame, (req, res) => {
   const { gameLocation, gameDate, gameTime, gameStatus } = req.body;
   const query = `INSERT INTO GAMES ( gameLocation, gameDate, gameTime, gameStatus) VALUES (?,?,?,?) `;
   db.run(query, [gameLocation, gameDate, gameTime, gameStatus], function (err) { if (err) return res.status(500).json({ error: err.message }); res.json({ id: this.lastID });
   });
   });
 //Create (POST) a row to USERGAMES table
-app.post('/api/mydatabase/usergames', validateUserGame, (req, res) => {
+app.post('/api/usergames', validateUserGame, (req, res) => {
   const { GameID, UserID, teamNumber } = req.body;
   const query = `INSERT INTO USERGAMES ( GameID, UserID, teamNumber ) VALUES (?,?,?) `;
   db.run(query, [GameID, UserID, teamNumber], function (err) { if (err) return res.status(500).json({ error: err.message }); res.json({GameID,UserID});
@@ -122,12 +123,29 @@ app.get('/api/mydatabase/users', (req, res) => {
   });
   });
 //Read (GET) from GAMES table
-app.get('/api/mydatabase/games', (req, res) => {
+app.get('/api/games', (req, res) => {
   db.all('SELECT * FROM GAMES', (err, rows) => {
   if (err) return res.status(500).json({ error: err.message });
   res.json(rows);
   });
   });
+//Get the players from a certain game
+app.get("/api/usergames/:gameId/players", (req, res) => {
+  const { gameId } = req.params;
+  const query = `
+    SELECT USERS.firstName, USERS.lastName, USERGAMES.teamNumber
+    FROM USERGAMES
+    JOIN USERS ON USERGAMES.UserID = USERS.UserID
+    WHERE USERGAMES.GameID = ?
+  `;
+
+  db.all(query, [gameId], (err, rows) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+    res.json(rows); // array of { name, teamNumber }
+  });
+});
 //Read (GET) from USERGAMES table
 app.get('/api/mydatabase/usergames', (req, res) => {
   db.all('SELECT * FROM USERGAMES', (err, rows) => {
@@ -135,6 +153,42 @@ app.get('/api/mydatabase/usergames', (req, res) => {
   res.json(rows);
   });
   });
+//GET the profile information for the logged-in user
+app.get('/api/user/profile', authenticateToken, (req, res) => {
+  const userId = req.user.id;  // The user ID is extracted from the JWT
+
+  console.log('User ID from token:', userId);
+  const query = `
+    SELECT firstName, lastName, email, birthDate, gender, heightFeet, heightInches, preferredPosition, dominantFoot
+    FROM USERS
+    WHERE UserID = ?
+  `;
+
+  db.get(query, [userId], (err, row) => {
+    if (err) {
+      return res.status(500).json({ message: 'Error fetching user data', error: err.message });
+    }
+
+    if (!row) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.json(row);  // Send the user profile data as the response
+  });
+});
+//Get the information for a specific game
+app.get('/api/games/:GameID', (req, res) => {
+  const { GameID } = req.params;
+  db.get('SELECT * FROM GAMES WHERE GameID = ?', [GameID], (err, row) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+    if (!row) {
+      return res.status(404).json({ error: 'Game not found' });
+    }
+    res.json(row);
+  });
+});
 
 
 //Update (PUT) on USERS table
@@ -154,7 +208,7 @@ app.put('/api/mydatabase/users/:UserID', validateRegistration, async (req, res) 
   });
   });
 //Update (PUT) on GAMES table
-app.put('/api/mydatabase/games/:GameID', validateGame, (req, res) => {
+app.put('/api/games/:GameID', validateGame, (req, res) => {
   const { GameID } = req.params;
   const { gameLocation, gameDate, gameTime, gameStatus } = req.body;
   const query = `
@@ -195,7 +249,7 @@ app.delete('/api/mydatabase/games/:GameID', (req, res) => {
   });
   });
 //Delete (DELETE) a row from USERGAMES table
-app.delete('/api/mydatabase/usergames/:CompositeID', (req, res) => {
+app.delete('/api/usergames/:CompositeID', (req, res) => {
   const { CompositeID } = req.params;
   const [GameID, UserID] = CompositeID.split('-');
   db.run('DELETE FROM USERGAMES WHERE GameID = ? AND UserID = ?', [GameID, UserID], function (err) {
@@ -225,12 +279,12 @@ app.post('/login', (req,res) => {
         return res.status(404).json({ message: 'User is not found. Please register for access.' });
       }
 
-  //Validation to ensure that the password is correct using bcypt
+  //Validation to ensure that the password is correct using bcrypt
   try {
     const isMatch = await bcrypt.compare(password, row.password);
     if (isMatch) {
       //Generates a token for the user information to allow access to protected resources
-      const token = generateToken(row.email);
+      const token = generateToken({id: row.UserID, email: row.email});
       res.status(200).json({ message: `Access granted for user: ${row.email}`, token});
     }
     else {
@@ -293,7 +347,7 @@ function validateRegistration(req,res,next) {
   //Ensures that the gender is either Male or Female or Other
   if (gender !== 'Male' && gender !== 'Female' && gender !== 'Other') {
     return res.status(400).json({ error: 'Gender must be listed as either Male, Female, or Other.'});
-  }
+  } 
 
   //Ensures that the height in feet is between four and seven
   if (heightFeet <=3 || heightFeet >= 8) {
@@ -308,7 +362,7 @@ function validateRegistration(req,res,next) {
   //Ensures that the dominant foot of the user is listed as either Right or Left
   if (dominantFoot != "Right" && dominantFoot != "Left") {
     return res.status(400).json({ error: 'The dominant foot must be expressed as either Right or Left'});
-  }
+  } 
 
   next();
 }
