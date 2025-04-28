@@ -40,7 +40,7 @@ export default function Register() {
     const errors = [];
 
     // Trim and validate required fields
-    if (!firstName || !lastName || !email || !password || !birthDate || !gender) {
+    if (!firstName || !lastName || !email || !password || !birthDate || !gender || !dominantFoot) {
       errors.push("Missing required fields.");
     }
 
@@ -75,23 +75,35 @@ export default function Register() {
       errors.push("Gender must be Male, Female, or Other.");
     }
 
-    const feet = Number(heightFeet);
-    const inches = Number(heightInches);
-    if (isNaN(feet) || feet < 4 || feet > 7) {
-      errors.push("Height in feet must be between 4 and 7.");
-    }
-    if (isNaN(inches) || inches < 0 || inches > 11) {
-      errors.push("Height in inches must be between 0 and 11.");
+    if (heightFeet!= null && heightFeet !== '') {
+      const feet = Number(heightFeet);
+      if (isNaN(feet) || feet < 4 || feet > 7) {
+        errors.push("Height in feet must be between 4 and 7.");
+      }
     }
 
-    if (dominantFoot && !["Right", "Left"].includes(dominantFoot)) {
-      errors.push("Dominant foot must be either Right or Left.");
+    if (heightInches !== null && heightInches !== '') {
+      const inches = Number(heightInches);
+      if (isNaN(inches) || inches < 0 || inches > 11) {
+        errors.push("Height in inches must be between 0 and 11.");
+      }
+    }
+    
+
+    if (dominantFoot !== '') {
+      if (dominantFoot && !["Right", "Left"].includes(dominantFoot)) {
+        errors.push("Dominant foot must be either Right or Left.");
+      }
     }
 
     if (errors.length > 0) {
       setErrorMessage(errors.join(" "));
       return;
     }
+
+    const finalHeightFeet = heightFeet === "" ? null : heightFeet;
+    const finalHeightInches = heightInches === "" ? null : heightInches;
+    const finalPreferredPosition = preferredPosition === "" ? null : preferredPosition;
 
     try {
       const response = await axiosInstance.post("/register", {
@@ -101,10 +113,10 @@ export default function Register() {
         password,
         birthDate,
         gender,
-        heightFeet,
-        heightInches,
-        preferredPosition,
-        dominantFoot,
+        heightFeet: finalHeightFeet,
+        heightInches: finalHeightInches,
+        preferredPosition: finalPreferredPosition,
+        dominantFoot
       });
 
       console.log("Registration success:", response.data);
@@ -173,6 +185,7 @@ export default function Register() {
           value={dominantFoot}
           onChange={setDominantFoot}
           allowDeselect
+          required
           mt="md"
         />
 

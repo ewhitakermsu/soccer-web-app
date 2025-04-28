@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axiosInstance from "../authentication/axiosInstance";
 import { getUserFromToken } from '../authentication/auth';
-import { Container, Text, Paper, Title, Group, Loader, TextInput, Flex, Button } from '@mantine/core';
+import { Container, Text, Paper, Grid, Title, Group, Loader, TextInput, Flex, Button } from '@mantine/core';
 import { useNavigate } from 'react-router-dom';
 
 export default function ProfilePage() {
@@ -35,27 +35,44 @@ export default function ProfilePage() {
   }
 
   return (
-    <Container size="md" my={40}>
+    <Container size="sm" my={20}>
       <Title ta="center" mb="md">User Profile</Title>
       
       <Flex justify="center">
-        <Paper withBorder shadow="md" p={30} radius="md" style={{ width: '100%', maxWidth: 500 }}>
-            <Group direction="column" spacing="md">
-            <TextInput label="First Name" value={userProfile.firstName} readOnly />
-            <TextInput label="Last Name" value={userProfile.lastName} readOnly />
-            <TextInput label="Email" value={userProfile.email} readOnly />
-            <TextInput label="Date of Birth" value={userProfile.birthDate} readOnly />
-            <TextInput label="Gender" value={userProfile.gender} readOnly />
-            <TextInput label="Height in Feet" value={userProfile.heightFeet} readOnly />
-            <TextInput label="Height in Inches" value={userProfile.heightInches} readOnly />
-            <TextInput label="Preferred Position" value={userProfile.preferredPosition} readOnly />
-            <TextInput label="Dominant Foot" value={userProfile.dominantFoot} readOnly />
+        <Grid gutter="sm">
+            <Grid.Col span={6}>
+              <TextInput label="First Name" value={userProfile.firstName} readOnly size="md" />
+            </Grid.Col>
+            <Grid.Col span={6}>
+              <TextInput label="Last Name" value={userProfile.lastName} readOnly size="md" />
+            </Grid.Col>
+            <Grid.Col span={6}>
+              <TextInput label="Email" value={userProfile.email} readOnly size="md" />
+            </Grid.Col>
+            <Grid.Col span={6}>            
+              <TextInput label="Date of Birth" value={userProfile.birthDate} readOnly size="md" />
+            </Grid.Col>
+            <Grid.Col span={6}>
+              <TextInput label="Gender" value={userProfile.gender} readOnly size="md" />
+            </Grid.Col>
+            <Grid.Col span={6}>
+              <TextInput label="Height in Feet" value={userProfile.heightFeet} readOnly size="md" />
+            </Grid.Col>
+            <Grid.Col span={6}>
+              <TextInput label="Height in Inches" value={userProfile.heightInches} readOnly size="md" />
+            </Grid.Col>
+            <Grid.Col span={6}>
+              <TextInput label="Preferred Position" value={userProfile.preferredPosition} readOnly size="md" />
+            </Grid.Col>
+            <Grid.Col span={6}>
+              <TextInput label="Dominant Foot" value={userProfile.dominantFoot} readOnly size="md" />
+            </Grid.Col>
 
             <Button fullWidth variant="light" mt="md" onClick={() => navigate('/home')}>
             Back to Home
             </Button>
-            </Group>
-        </Paper>
+          
+            </Grid>
       </Flex>
     </Container>
   );

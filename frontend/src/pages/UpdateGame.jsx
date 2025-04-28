@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { TextInput, Button, Container, Paper, Title, Group, Loader } from '@mantine/core';
+import { TextInput, Button, Container, Paper, Select, Grid, Title, Group, Loader } from '@mantine/core';
 import axiosInstance from '../authentication/axiosInstance';
 
 export default function EditGamePage() {
@@ -94,33 +94,45 @@ export default function EditGamePage() {
   return (
     <Container size="sm" my={40}>
       <Title ta="center">Update Game</Title>
-      <Paper withBorder shadow="md" p={30} radius="md">
+      <Paper withBorder shadow="md" p={30} radius="md" sx={{ width: '100%' }}>
         <form onSubmit={handleSubmit}>
-          <Group direction="column" spacing="md">
+          <Grid gutter="md" sx={{ width: '100%' }}>
+          <Grid.Col span={6}>
             <TextInput 
               label="Game Location" 
               value={gameData.gameLocation} 
               onChange={(e) => setGameData({ ...gameData, gameLocation: e.target.value })}
+              sx={{ width: '100%', minWidth: '100%' }}
             />
+            </Grid.Col>
+          <Grid.Col span={6}> 
             <TextInput 
               label="Date" 
               value={gameData.gameDate} 
               onChange={(e) => setGameData({ ...gameData, gameDate: e.target.value })}
+              sx={{ width: '100%', minWidth: '100%' }}
             />
+          </Grid.Col>
+          <Grid.Col span={6}>
             <TextInput 
               label="Time" 
               value={gameData.gameTime} 
               onChange={(e) => setGameData({ ...gameData, gameTime: e.target.value })}
             />
-            <TextInput 
-              label="Status" 
-              value={gameData.gameStatus} 
-              onChange={(e) => setGameData({ ...gameData, gameStatus: e.target.value })}
-            />
+          </Grid.Col>
+          <Grid.Col span={6}>
+            <Select
+                label="Game Status"
+                value={gameData.gameStatus}
+                onChange={(value) => setGameData({ ...gameData, gameStatus: value })}
+                data={['Scheduled', 'Updated', 'Finished', 'Cancelled']}  // Dropdown options
+                required
+              />
+          </Grid.Col>
             <Button fullWidth type="submit">
               Update Game
             </Button>
-          </Group>
+          </Grid>
         </form>
       </Paper>
     </Container>

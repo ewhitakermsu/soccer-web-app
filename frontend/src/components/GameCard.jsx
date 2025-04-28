@@ -1,4 +1,4 @@
-import { Card, Text, Group, Button, Select, Modal, List, Loader} from '@mantine/core';
+import { Card, Text, Group, Button, Select, Grid, Modal, List, Loader} from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -91,6 +91,10 @@ export default function GameCard({ game, onDelete }) {
       alert(err.response?.data?.message || "Error leaving game.");
     }
   };
+
+  // Separate players into two teams
+  const team1Players = players.filter(player => player.teamNumber === 1);
+  const team2Players = players.filter(player => player.teamNumber === 2);
   
   return (
     <>
@@ -114,6 +118,7 @@ export default function GameCard({ game, onDelete }) {
       <Text size="sm" c="dimmed">
         Status: {game.gameStatus}
       </Text>
+      <br></br>
 
       {joined ? (
         <Text size="sm" mt="md" fw={500} c="green">
@@ -132,6 +137,10 @@ export default function GameCard({ game, onDelete }) {
             ]}
             required
           />
+        <br></br>
+        <Text size="sm" fw={600}>
+          Main Game Actions
+        </Text>
 
         <Button variant="light" fullWidth mt="md" onClick={handleJoinGame}>
           Join Game
@@ -147,12 +156,16 @@ export default function GameCard({ game, onDelete }) {
       Leave Game
       </Button>
 
+      <br></br>
+      <Text size="sm" fw={600}>
+          Game Management Actions
+        </Text>
+
       <Group position="right" style={{ marginTop: '10px' }}>
-        {/* Edit Button to navigate to the Edit Game page */}
           <Button
             component={Link}
             to={`/game/edit/${game.GameID}`}
-            variant="filled"
+            variant="light"
             color="blue"
             fullWidth
             mt="md"
@@ -177,19 +190,37 @@ export default function GameCard({ game, onDelete }) {
       onClose={close}
       title={`Players in Game #${game.GameID}`}
       centered
-    >
+      >
       {loading ? (
-        <Loader />
+      <Loader />
       ) : players.length === 0 ? (
         <Text>No players have joined yet.</Text>
       ) : (
-        <List spacing="sm">
-          {players.map((player, index) => (
-            <List.Item key={index}>
-              {player.firstName} {player.lastName} — Team {player.teamNumber}
-            </List.Item>
-          ))}
-        </List>
+        <Grid gutter="sm">
+          {/* Team 1 Players */}
+            <Grid.Col span={6}>
+              <Text fw={500} mb="md">Team 1</Text>
+              <List spacing="sm">
+              {team1Players.map((player, index) => (
+              <List.Item key={index}>
+              {player.firstName} {player.lastName}
+              </List.Item>
+            ))}
+          </List>
+        </Grid.Col>
+
+        {/* Team 2 Players */}
+        <Grid.Col span={6}>
+          <Text fw={500} mb="md">Team 2</Text>
+            <List spacing="sm">
+              {team2Players.map((player, index) => (
+              <List.Item key={index}>
+              {player.firstName} {player.lastName}
+              </List.Item>
+            ))}
+            </List>
+          </Grid.Col>
+        </Grid>
       )}
     </Modal>
   </>

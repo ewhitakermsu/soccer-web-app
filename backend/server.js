@@ -54,7 +54,12 @@ app.use(express.json());
 app.use(cors());
 app.use(express.urlencoded({extended: true}));
 app.use(express.static('public'));
-app.listen(PORT, () => { console.log(`Server running on http://localhost:${PORT}`); });
+
+if (require.main === module) {
+  app.listen(PORT, () => {
+      console.log(`Server running on http://localhost:${PORT}`);
+  });
+}
 
 //Middleware
 //Ensures that only logged-in users can access protected resources
@@ -66,8 +71,8 @@ app.use((req, res, next) => {
 });
 
 //Test route for accessing protected resources
-app.get('/protected', (req,res) => {
-  res.status(200).json({ message: `Access to protected resources granted`});
+app.get('/protected', authenticateToken, (req,res) => {
+  res.status(200).json({ message: `Protected route accessed successfully`});
   });
 
 
@@ -99,7 +104,7 @@ catch (err) {
   });
 
 //Create (POST) a row to GAMES table
-app.post('/api/creategame', validateGame, (req, res) => {
+app.post('/api/creategame', authenticateToken, validateGame, (req, res) => {
   const { gameLocation, gameDate, gameTime, gameStatus } = req.body;
   const query = `INSERT INTO GAMES ( gameLocation, gameDate, gameTime, gameStatus) VALUES (?,?,?,?) `;
   db.run(query, [gameLocation, gameDate, gameTime, gameStatus], function (err) { if (err) return res.status(500).json({ error: err.message }); res.json({ id: this.lastID });
@@ -350,19 +355,26 @@ function validateRegistration(req,res,next) {
   } 
 
   //Ensures that the height in feet is between four and seven
-  if (heightFeet <=3 || heightFeet >= 8) {
-    return res.status(400).json({ error: 'The height expressed in feet must be between four and seven'});
+  if  (heightFeet !== undefined && heightFeet !== null && heightFeet !== '') {
+    const feet = Number(heightFeet); // safely cast to number
+    if (isNaN(feet) || feet <= 3 || feet >= 8) {
+      return res.status(400).json({ error: 'The height expressed in feet must be between four and seven' });
+    }
   }
 
   //Ensures that the height expressed in inches is between zero and eleven
-  if (heightInches < 0 || heightInches >= 12) {
-    return res.status(400).json({ error: 'The height expressed in inches must be between zero and eleven'});
+  if (heightInches !== '') {
+    if (heightInches < 0 || heightInches >= 12) {
+      return res.status(400).json({ error: 'The height expressed in inches must be between zero and eleven'});
+    }
   }
 
   //Ensures that the dominant foot of the user is listed as either Right or Left
-  if (dominantFoot != "Right" && dominantFoot != "Left") {
-    return res.status(400).json({ error: 'The dominant foot must be expressed as either Right or Left'});
-  } 
+  if (dominantFoot !== '') {
+    if (dominantFoot != "Right" && dominantFoot != "Left") {
+      return res.status(400).json({ error: 'The dominant foot must be expressed as either Right or Left'});
+    } 
+  }
 
   next();
 }
@@ -423,3 +435,6 @@ function validateUserGame(req,res,next) {
 
 next();
 }
+
+
+module.exports = {app,db};
